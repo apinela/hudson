@@ -91,8 +91,8 @@ then
   chmod a+x ~/bin/repo
 fi
 
-git config --global user.name $(whoami)@$NODE_NAME
-git config --global user.email jenkins@cyanogenmod.com
+git config --global user.name "André Pinela"
+git config --global user.email "sheffzor@gmail.com"
 
 if [[ "$REPO_BRANCH" =~ "jellybean" || $REPO_BRANCH =~ "cm-10" ]]; then 
    JENKINS_BUILD_DIR=jellybean
@@ -142,7 +142,7 @@ mkdir -p .repo/local_manifests
 rm -f .repo/local_manifest.xml
 
 rm -rf $WORKSPACE/build_env
-git clone https://github.com/CyanogenMod/cm_build_config.git $WORKSPACE/build_env -b master
+git clone https://github.com/apinela/cm_build_config.git $WORKSPACE/build_env -b master
 check_result "Bootstrap failed"
 
 if [ -f $WORKSPACE/build_env/bootstrap.sh ]
@@ -151,6 +151,7 @@ then
 fi
 
 cp $WORKSPACE/build_env/$REPO_BRANCH.xml .repo/local_manifests/dyn-$REPO_BRANCH.xml
+cp $WORKSPACE/build_env/shared.xml .repo/local_manifests/dyn-shared.xml
 
 echo Core Manifest:
 cat .repo/manifest.xml
@@ -175,8 +176,6 @@ echo Sync complete.
 if [ -f $WORKSPACE/hudson/$REPO_BRANCH-setup.sh ]
 then
   $WORKSPACE/hudson/$REPO_BRANCH-setup.sh
-else
-  $WORKSPACE/hudson/cm-setup.sh
 fi
 
 if [ -f .last_branch ]
@@ -311,7 +310,7 @@ fi
 
 echo "$REPO_BRANCH-$RELEASE_MANIFEST" > .last_branch
 
-time mka bacon recoveryzip recoveryimage checkapi
+time mka bacon recoveryimage
 check_result "Build failed."
 
 if [ "$SIGN_BUILD" = "true" ]
@@ -351,6 +350,11 @@ then
   cp $OUT/recovery.img $WORKSPACE/archive
 fi
 
+if [ -f $OUT/boot.img ]
+then
+  cp $OUT/boot.img $WORKSPACE/archive
+fi
+
 # archive the build.prop as well
 ZIP=$(ls $WORKSPACE/archive/cm-*.zip | grep -v -- -fastboot)
 unzip -p $ZIP system/build.prop > $WORKSPACE/archive/build.prop
@@ -382,27 +386,3 @@ rmdir $TEMPSTASH
 
 # chmod the files in case UMASK blocks permissions
 chmod -R ugo+r $WORKSPACE/archive
-
-# Add build to GetCM
-if [ "$JOB_NAME" = "android" -a "$USER" = "jenkins" ] || [ "$PUBLISH_GETCM" = "true" ]; then
-    echo "Adding build to GetCM"
-    echo python /opt/jenkins-utils/add_build.py --file `ls $WORKSPACE/archive/*.zip` --buildprop $WORKSPACE/archive/build.prop --buildnumber $BUILD_NO --releasetype $RELEASE_TYPE
-    python /opt/jenkins-utils/add_build.py --file `ls $WORKSPACE/archive/*.zip` --buildprop $WORKSPACE/archive/build.prop --buildnumber $BUILD_NO --releasetype $RELEASE_TYPE
-fi
-
-CMCP=$(which cmcp)
-if [ ! -z "$CMCP" -a ! -z "$CM_RELEASE" ]
-then
-  MODVERSION=$(cat $WORKSPACE/archive/build.prop | grep ro.cm.version | cut -d = -f 2)
-  if [ -z "$MODVERSION" ]
-  then
-    echo "Unable to detect ro.cm.version."
-    exit 1
-  fi
-  echo Archiving release to S3.
-  for f in $(ls $WORKSPACE/archive)
-  do
-    s3cmd --no-progress --disable-multipart -P put $WORKSPACE/archive/$f s3://cyngn-builds/release/$MODVERSION/$f > /dev/null 2> /dev/null
-    check_result "Failure archiving $f"
-  done
-fi
