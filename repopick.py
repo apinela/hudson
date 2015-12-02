@@ -21,10 +21,10 @@ for change in sys.argv[1:]:
     f = urllib.request.urlopen('http://review.cyanogenmod.org/changes/?q=change:%s' % change)
     d = f.read().decode(encoding='UTF-8')
     # gerrit doesnt actually return json. returns two json blobs, separate lines. bizarre.
+    d = d.split('\'')[1]
     print(d)
-    d = d.split('\n')[0]
     data = json.loads(d)
-    project = data['project']
+    project = data[0]['project']
 
     plist = subprocess.Popen([os.environ['HOME']+"/bin/repo","list"], stdout=subprocess.PIPE)
     while(True):
