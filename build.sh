@@ -60,6 +60,13 @@ then
   SYNC_PROTO=http
 fi
 
+if [ -z "$REPO_SYNC" ]
+then
+  echo REPO_SYNC not specified
+  exit 1
+fi
+
+
 export PYTHONDONTWRITEBYTECODE=1
 
 # colorization fix in Jenkins
@@ -168,10 +175,13 @@ then
   fi
 fi
 
-echo Syncing...
-repo sync -d -c > /dev/null
-check_result "repo sync failed."
-echo Sync complete.
+if [ $REPO_SYNC = "true" ]
+then
+  echo Syncing...
+  repo sync -d -c > /dev/null
+  check_result "repo sync failed."
+  echo Sync complete.
+fi
 
 if [ -f $WORKSPACE/hudson/$REPO_BRANCH-setup.sh ]
 then
