@@ -310,8 +310,14 @@ fi
 
 echo "$REPO_BRANCH-$RELEASE_MANIFEST" > .last_branch
 
-time mka bacon recoveryimage
-check_result "Build failed."
+if [ ! -z "$JOBS" ]
+then
+  time make -j$JOBS bacon recoveryimage
+  check_result "Build failed."
+else
+  time mka bacon recoveryimage
+  check_result "Build failed."
+fi
 
 if [ "$SIGN_BUILD" = "true" ]
 then
