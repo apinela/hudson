@@ -320,13 +320,18 @@ fi
 
 echo "$REPO_BRANCH-$RELEASE_MANIFEST" > .last_branch
 
-if [ ! -z "$JOBS" ]
+if [ $BOOT_IMAGE_ONLY = "true" ]
 then
-  time make -j$JOBS bacon recoveryimage
-  check_result "Build failed."
+  time mka bootimage
 else
-  time mka bacon recoveryimage
-  check_result "Build failed."
+  if [ ! -z "$JOBS" ]
+  then
+    time make -j$JOBS bacon recoveryimage
+    check_result "Build failed."
+  else
+    time mka bacon recoveryimage
+    check_result "Build failed."
+  fi
 fi
 
 if [ "$SIGN_BUILD" = "true" ]
