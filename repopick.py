@@ -17,12 +17,11 @@ except ImportError:
   urllib.request = urllib2
 
 for change in sys.argv[1:]:
-    print(change)
+    print("Change applied: %s" % change)
     f = urllib.request.urlopen('http://review.cyanogenmod.org/changes/?q=change:%s' % change)
     d = f.read().decode(encoding='UTF-8')
     # gerrit doesnt actually return json. returns two json blobs, separate lines. bizarre.
     d = d.split('\'')[1]
-    print(d)
     data = json.loads(d)
     project = data[0]['project']
 
@@ -37,21 +36,20 @@ for change in sys.argv[1:]:
         if(retcode is not None):
             break
 
-    print(project)
-    number = data['number']
+    print("Project path: %s" % project)
+    number = data[0]['_number']
 
     f = urllib.request.urlopen("http://review.cyanogenmod.org/changes/%s/revisions/current/review" % number)
-    d = f.read().decode()
+    d = f.read().decode(encoding='UTF-8')
     d = '\n'.join(d.split('\n')[1:])
     data = json.loads(d)
-
     current_revision = data['current_revision']
     patchset = 0
     ref = ""
 
     for i in data['revisions']:
         if i == current_revision:
-            ref = data['revisions'][i]['fetch']['http']['ref']
+            ref = data['revisions'][i]['fetch']['anonymous http']['ref']
             patchset = data['revisions'][i]['_number']
             break
 
