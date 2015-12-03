@@ -26,7 +26,7 @@ for change in sys.argv[1:]:
     data = json.loads(d)
     project = data[0]['project']
 
-    plist = subprocess.Popen([os.environ['HOME']+"/bin/repo","list"], stdout=subprocess.PIPE)
+    plist = subprocess.Popen(["repo","list"], stdout=subprocess.PIPE)
     while(True):
         retcode = plist.poll()
         pline = plist.stdout.readline().rstrip()
