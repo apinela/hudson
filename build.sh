@@ -131,10 +131,13 @@ else
   MANIFEST=""
 fi
 
-rm -rf .repo/manifests*
-rm -f .repo/local_manifests/dyn-*.xml
-repo init -u $SYNC_PROTO://github.com/CyanogenMod/android.git -b $SYNC_BRANCH $MANIFEST
-check_result "repo init failed."
+if [ $REPO_SYNC = "true" ]
+then
+  rm -rf .repo/manifests*
+  rm -f .repo/local_manifests/dyn-*.xml
+  repo init -u $SYNC_PROTO://github.com/CyanogenMod/android.git -b $SYNC_BRANCH $MANIFEST
+  check_result "repo init failed."
+fi
 
 # make sure ccache is in PATH
 export PATH="$PATH:/opt/local/bin/:$PWD/prebuilts/misc/$(uname|awk '{print tolower($0)}')-x86/ccache"
@@ -148,24 +151,33 @@ fi
 mkdir -p .repo/local_manifests
 rm -f .repo/local_manifest.xml
 
-rm -rf $WORKSPACE/build_env
-git clone https://github.com/apinela/cm_build_config.git $WORKSPACE/build_env -b master
-check_result "Bootstrap failed"
+if [ $REPO_SYNC = "true" ]
+then
+  rm -rf $WORKSPACE/build_env
+  git clone https://github.com/apinela/cm_build_config.git $WORKSPACE/build_env -b master
+  check_result "Bootstrap failed"
+fi
 
 if [ -f $WORKSPACE/build_env/bootstrap.sh ]
 then
   bash $WORKSPACE/build_env/bootstrap.sh
 fi
 
-cp $WORKSPACE/build_env/$REPO_BRANCH.xml .repo/local_manifests/dyn-$REPO_BRANCH.xml
-cp $WORKSPACE/build_env/shared.xml .repo/local_manifests/dyn-shared.xml
+if [ $REPO_SYNC = "true" ]
+then
+  cp $WORKSPACE/build_env/$REPO_BRANCH.xml .repo/local_manifests/dyn-$REPO_BRANCH.xml
+  cp $WORKSPACE/build_env/shared.xml .repo/local_manifests/dyn-shared.xml
+fi
 
 echo Core Manifest:
 cat .repo/manifest.xml
 
-## TEMPORARY: Some kernels are building _into_ the source tree and messing
-## up posterior syncs due to changes
-rm -rf kernel/*
+if [ $REPO_SYNC = "true" ]
+then
+  ## TEMPORARY: Some kernels are building _into_ the source tree and messing
+  ## up posterior syncs due to changes
+  rm -rf kernel/*
+fi
 
 if [[ "$RELEASE_TYPE" = "CM_RELEASE" || "$STABILIZATION_BRANCH" = "true" ]]
 then
