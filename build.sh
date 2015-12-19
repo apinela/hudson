@@ -37,6 +37,12 @@ then
   exit 1
 fi
 
+if [ -z "$REPO_HOST" ]
+then
+  echo REPO_HOST not specified. Using REPO_HOST=github.com/CyanogenMod/android.git
+  export REPO_HOST="github.com/CyanogenMod/android.git"
+fi
+
 if [ -z "$REPO_BRANCH" ]
 then
   echo REPO_BRANCH not specified
@@ -57,7 +63,7 @@ fi
 
 if [ -z "$SYNC_PROTO" ]
 then
-  SYNC_PROTO=http
+  SYNC_PROTO=https
 fi
 
 if [ -z "$REPO_SYNC" ]
@@ -101,13 +107,7 @@ fi
 git config --global user.name "André Pinela"
 git config --global user.email "sheffzor@gmail.com"
 
-if [[ "$REPO_BRANCH" =~ "jellybean" || $REPO_BRANCH =~ "cm-10" ]]; then 
-   JENKINS_BUILD_DIR=jellybean
-else
-   JENKINS_BUILD_DIR=$REPO_BRANCH
-fi
-
-export JENKINS_BUILD_DIR
+export JENKINS_BUILD_DIR=source
 
 mkdir -p $JENKINS_BUILD_DIR
 cd $JENKINS_BUILD_DIR
@@ -135,7 +135,7 @@ if [ $REPO_SYNC = "true" ]
 then
   rm -rf .repo/manifests*
   rm -f .repo/local_manifests/dyn-*.xml
-  repo init -u $SYNC_PROTO://github.com/CyanogenMod/android.git -b $SYNC_BRANCH $MANIFEST
+  repo init -u $SYNC_PROTO://$REPO_HOST -b $SYNC_BRANCH $MANIFEST
   check_result "repo init failed."
 fi
 
@@ -190,7 +190,7 @@ fi
 if [ $REPO_SYNC = "true" ]
 then
   echo Syncing...
-  repo sync -d -c > /dev/null
+  repo sync -d -c --force-sync > /dev/null
   check_result "repo sync failed."
   echo Sync complete.
 fi
