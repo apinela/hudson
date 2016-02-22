@@ -165,8 +165,12 @@ fi
 
 if [ $REPO_SYNC = "true" ]
 then
-  cp $WORKSPACE/build_env/$REPO_BRANCH.xml .repo/local_manifests/dyn-$REPO_BRANCH.xml
-  cp $WORKSPACE/build_env/shared.xml .repo/local_manifests/dyn-shared.xml
+  if [ -f $WORKSPACE/build_env/$REPO_BRANCH.xml ]
+  then
+    cp $WORKSPACE/build_env/$REPO_BRANCH.xml .repo/local_manifests/dyn-$REPO_BRANCH.xml
+  else
+    cp $WORKSPACE/build_env/shared.xml .repo/local_manifests/dyn-shared.xml
+  fi
 fi
 
 echo Core Manifest:
