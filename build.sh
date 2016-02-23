@@ -37,6 +37,12 @@ then
   exit 1
 fi
 
+if [ -z "$BUILD_TARGETS" ]
+then
+  echo BUILD_TARGETS not specified
+  exit 1
+fi
+
 if [ -z "$REPO_HOST" ]
 then
   echo REPO_HOST not specified. Using REPO_HOST=github.com/CyanogenMod/android.git
@@ -342,7 +348,7 @@ then
 else
   if [ ! -z "$JOBS" ]
   then
-    time make -j$JOBS bacon recoveryimage
+    time make -j$JOBS $BUILD_TARGETS
     check_result "Build failed."
   else
     time mka bacon recoveryimage
