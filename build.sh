@@ -37,6 +37,12 @@ then
   exit 1
 fi
 
+if [ -z "$JOBS" ]
+then
+  echo JOBS not specified
+  exit 1
+fi
+
 if [ -z "$BUILD_TARGETS" ]
 then
   echo BUILD_TARGETS not specified
@@ -45,8 +51,8 @@ fi
 
 if [ -z "$REPO_HOST" ]
 then
-  echo REPO_HOST not specified. Using REPO_HOST=github.com/CyanogenMod/android.git
-  export REPO_HOST="github.com/CyanogenMod/android.git"
+  echo REPO_HOST not specified
+  exit 1
 fi
 
 if [ -z "$REPO_BRANCH" ]
@@ -187,18 +193,6 @@ then
   ## TEMPORARY: Some kernels are building _into_ the source tree and messing
   ## up posterior syncs due to changes
   rm -rf kernel/*
-fi
-
-if [[ "$RELEASE_TYPE" = "CM_RELEASE" || "$STABILIZATION_BRANCH" = "true" ]]
-then
-  if [ -f  $WORKSPACE/build_env/$REPO_BRANCH-release.xml ]
-  then
-    cp -f $WORKSPACE/build_env/$REPO_BRANCH-release.xml .repo/local_manifests/dyn-$REPO_BRANCH.xml
-  fi
-fi
-
-if [ $REPO_SYNC = "true" ]
-then
   echo Syncing...
   repo sync -d -c --force-sync > /dev/null
   check_result "repo sync failed."
@@ -238,7 +232,7 @@ check_result "lunch failed."
 
 # include only the auto-generated locals
 TEMPSTASH=$(mktemp -d)
-mv .repo/local_manifests/* $TEMPSTASH
+mv .repo/local_manifests/* $TEMPSTASH 2>/dev/null
 mv $TEMPSTASH/roomservice.xml .repo/local_manifests/ 2>/dev/null
 
 # save it
@@ -246,49 +240,14 @@ repo manifest -o $WORKSPACE/archive/manifest.xml -r
 
 # restore all local manifests
 mv $TEMPSTASH/* .repo/local_manifests/ 2>/dev/null
-rmdir $TEMPSTASH
+rmdir $TEMPSTASH 2>/dev/null
 
-rm -f $OUT/cm-*.zip*
+rm -f $OUT/*.zip*
 
 UNAME=$(uname)
 
-if [ ! -z "$BUILD_USER_ID" ]
-then
-  export RELEASE_TYPE=CM_EXPERIMENTAL
-fi
-
-export SIGN_BUILD=false
-
-if [ "$RELEASE_TYPE" = "CM_NIGHTLY" ]
-then
-  export CM_NIGHTLY=true
-elif [ "$RELEASE_TYPE" = "CM_EXPERIMENTAL" ]
-then
-  export CM_EXPERIMENTAL=true
-elif [ "$RELEASE_TYPE" = "CM_RELEASE" ]
-then
-  export CM_RELEASE=true
-  if [ "$SIGNED" = "true" ]
-  then
-    SIGN_BUILD=true
-  fi
-elif [ "$RELEASE_TYPE" = "CM_SNAPSHOT" ]
-then
-  export CM_SNAPSHOT=true
-  if [ "$SIGNED" = "true" ]
-  then
-    SIGN_BUILD=true
-  fi
-fi
-
-if [ ! -z "$CM_EXTRAVERSION" ]
-then
-  export CM_EXPERIMENTAL=true
-fi
-
 if [ ! -z "$GERRIT_CHANGES" ]
 then
-  export CM_EXPERIMENTAL=true
   IS_HTTP=$(echo $GERRIT_CHANGES | grep http)
   if [ -z "$IS_HTTP" ]
   then
@@ -344,50 +303,22 @@ echo "$REPO_BRANCH-$RELEASE_MANIFEST" > .last_branch
 
 if [ $BOOT_IMAGE_ONLY = "true" ]
 then
-  time mka bootimage
+  time make -j$JOBS bootimage
 else
-  if [ ! -z "$JOBS" ]
-  then
-    time make -j$JOBS $BUILD_TARGETS
-    check_result "Build failed."
-  else
-    time mka bacon recoveryimage
-    check_result "Build failed."
-  fi
+  time make -j$JOBS $BUILD_TARGETS
+  check_result "Build failed."
 fi
 
-if [ "$SIGN_BUILD" = "true" ]
+if [ "$FASTBOOT_IMAGES" = "true" ]
 then
-  MODVERSION=$(cat $OUT/system/build.prop | grep ro.cm.version | cut -d = -f 2)
-  if [ ! -z "$MODVERSION" -a -f $OUT/obj/PACKAGING/target_files_intermediates/$TARGET_PRODUCT-target_files-$BUILD_NUMBER.zip ]
-  then
-    if [ -s $OUT/ota_script_path ]
-    then
-        OTASCRIPT=$(cat $OUT/ota_script_path)
-    else
-        OTASCRIPT=./build/tools/releasetools/ota_from_target_files
-    fi
-    ./build/tools/releasetools/sign_target_files_apks -e Term.apk= -d vendor/cm-priv/keys $OUT/obj/PACKAGING/target_files_intermediates/$TARGET_PRODUCT-target_files-$BUILD_NUMBER.zip $OUT/$MODVERSION-signed-intermediate.zip
-    $OTASCRIPT -k vendor/cm-priv/keys/releasekey $OUT/$MODVERSION-signed-intermediate.zip $WORKSPACE/archive/cm-$MODVERSION-signed.zip
-    if [ "$FASTBOOT_IMAGES" = "true" ]
-    then
-       ./build/tools/releasetools/img_from_target_files $OUT/$MODVERSION-signed-intermediate.zip $WORKSPACE/archive/cm-$MODVERSION-fastboot.zip
-    fi
-    rm -f $OUT/ota_script_path
-  else
-    echo "Unable to find target files to sign"
-    exit 1
-  fi
-else
-  for f in $(ls $OUT/cm-*.zip*)
+   ./build/tools/releasetools/img_from_target_files $OUT/$MODVERSION-signed-intermediate.zip $WORKSPACE/archive/$MODVERSION-fastboot.zip
+fi
+
+for f in $(ls $OUT/*.zip*)
   do
     ln $f $WORKSPACE/archive/$(basename $f)
-  done
-fi
-if [ -f $OUT/utilties/update.zip ]
-then
-  cp $OUT/utilties/update.zip $WORKSPACE/archive/recovery.zip
-fi
+done
+
 if [ -f $OUT/recovery.img ]
 then
   cp $OUT/recovery.img $WORKSPACE/archive
@@ -399,7 +330,7 @@ then
 fi
 
 # archive the build.prop as well
-ZIP=$(ls $WORKSPACE/archive/cm-*.zip | grep -v -- -fastboot)
+ZIP=$(ls $WORKSPACE/archive/*.zip | grep -v -- -fastboot)
 unzip -p $ZIP system/build.prop > $WORKSPACE/archive/build.prop
 
 if [ "$TARGET_BUILD_VARIANT" = "user" -a "$EXTRA_DEBUGGABLE_BOOT" = "true" ]
@@ -408,7 +339,7 @@ then
   rm -f $OUT/root/default.prop
   DEBLUNCH=$(echo $LUNCH|sed -e 's|-user$|-userdebug|g')
   breakfast $DEBLUNCH
-  mka bootimage
+  make -j$JOBS bootimage
   check_result "Failed to generate a debuggable bootimage"
   cp $OUT/boot.img $WORKSPACE/archive/boot-debuggable.img
 fi
