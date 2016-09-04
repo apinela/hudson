@@ -30,7 +30,7 @@ for change in sys.argv[1:]:
         retcode = plist.poll()
         pline = plist.stdout.readline().rstrip()
         ppaths = re.split('\s*:\s*', pline.decode())
-        # Remove get the project names only already in lower case
+        # Get the project names already in lower case
         change_project_name = project.lower().split('/')[1]
         repo_project_name =  ppaths[1].lower().split('/')[1]
         if repo_project_name == change_project_name:
