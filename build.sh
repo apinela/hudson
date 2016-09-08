@@ -100,6 +100,8 @@ if [ -z "$BUILD_TAG" ]
 then
   echo BUILD_TAG not specified, using the default one...
   export BUILD_NUMBER=$(date +%Y%m%d)
+else
+  export BUILD_NUMBER=$BUILD_TAG
 fi
 
 export PATH=~/bin:$PATH
@@ -301,7 +303,7 @@ fi
 
 echo "$REPO_BRANCH-$RELEASE_MANIFEST" > .last_branch
 
-if [ $BOOT_IMAGE_ONLY = "true" ]
+if [ "$BOOT_IMAGE_ONLY" = "true" ]
 then
   time make -j$JOBS bootimage
 else
@@ -336,7 +338,7 @@ if [ "$EXTRA_DEBUGGABLE_BOOT" = "true" ]
 then
   # Minimal rebuild to get a debuggable boot image, just in case
   rm -f $OUT/root/default.prop
-  DEBLUNCH=$(echo $LUNCH|sed -e 's|-user$|-userdebug|g')
+  DEBLUNCH=$(echo $LUNCH|sed -e 's|-user$|-eng|g' 's|-userdebug$|-eng|g')
   lunch $DEBLUNCH
   make -j$JOBS bootimage
   check_result "Failed to generate a debuggable bootimage"
