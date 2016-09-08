@@ -7,11 +7,19 @@ export REPO_SYNC=true
 export BUILD_TARGETS=otapackage
 export LUNCH=${ROM}_${DEVICE}-${TYPE}
 echo "LUCNH=$LUNCH - $VERSION"
-cd ../../../../../../
-ORI_WORKSPACE=$WORKSPACE
-export WORKSPACE=$(pwd)
+unset IFS
+export ORIGINAL_WORKSPACE=$(pwd)
+export ANDROID_INITIAL_BLUID_PATH=$(cd ../../../../../../;pwd)
+export WORKSPACE=$ANDROID_INITIAL_BLUID_PATH
+cd $ANDROID_INITIAL_BLUID_PATH
+cd ../android/
+echo BUILD_PATH=$(pwd)
 rm -rf hudson/ build_env/
+rm archive/**
 curl -ksO https://raw.githubusercontent.com/apinela/hudson/master/job.sh
 chmod a+x job.sh
 ./job.sh
-cp -Rf ../android/archive/ $ORI_WORKSPACE
+cd $ORIGINAL_WORKSPACE
+mkdir -p archive
+rm -rf archive/**
+cp -Rvf $ANDROID_INITIAL_BLUID_PATH/../android/archive/** ./archive/.

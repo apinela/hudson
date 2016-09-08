@@ -324,15 +324,14 @@ then
 fi
 
 # archive the build.prop as well
-ZIP=$(ls $WORKSPACE/archive/*.zip | grep -v -- -fastboot)
-unzip -p $ZIP system/build.prop > $WORKSPACE/archive/build.prop
+cp -f $OUT/system/build.prop $WORKSPACE/archive/build.prop
 
-if [ "$TARGET_BUILD_VARIANT" = "user" -a "$EXTRA_DEBUGGABLE_BOOT" = "true" ]
+if [ "$EXTRA_DEBUGGABLE_BOOT" = "true" ]
 then
   # Minimal rebuild to get a debuggable boot image, just in case
   rm -f $OUT/root/default.prop
   DEBLUNCH=$(echo $LUNCH|sed -e 's|-user$|-userdebug|g')
-  breakfast $DEBLUNCH
+  lunch $DEBLUNCH
   make -j$JOBS bootimage
   check_result "Failed to generate a debuggable bootimage"
   cp $OUT/boot.img $WORKSPACE/archive/boot-debuggable.img
