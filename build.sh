@@ -338,7 +338,7 @@ if [ "$EXTRA_DEBUGGABLE_BOOT" = "true" ]
 then
   # Minimal rebuild to get a debuggable boot image, just in case
   rm -f $OUT/root/default.prop
-  DEBLUNCH=$(echo $LUNCH|sed -e 's|-user$|-eng|g' 's|-userdebug$|-eng|g')
+  DEBLUNCH=$(echo $LUNCH|sed -e 's|-userdebug$|-eng|g' -e 's|-user$|-eng|g')
   lunch $DEBLUNCH
   make -j$JOBS bootimage
   check_result "Failed to generate a debuggable bootimage"
