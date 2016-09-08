@@ -100,6 +100,7 @@ cd $WORKSPACE
 rm -rf archive
 mkdir -p archive
 export BUILD_NO=$BUILD_NUMBER
+unset BUILD_NUMBER
 
 export PATH=~/bin:$PATH
 
