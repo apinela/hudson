@@ -31,6 +31,12 @@ then
   exit 1
 fi
 
+if [ -z "$BUILD_TAG" ]
+then
+  echo BUILD_TAG not specified, using the default one...
+  export BUILD_NUMBER=$(date +%Y%m%d)
+fi
+
 if [ -z "$CLEAN" ]
 then
   echo CLEAN not specified
