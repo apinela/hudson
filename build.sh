@@ -31,12 +31,6 @@ then
   exit 1
 fi
 
-if [ -z "$BUILD_TAG" ]
-then
-  echo BUILD_TAG not specified, using the default one...
-  export BUILD_NUMBER=$(date +%Y%m%d)
-fi
-
 if [ -z "$CLEAN" ]
 then
   echo CLEAN not specified
@@ -101,6 +95,12 @@ rm -rf archive
 mkdir -p archive
 export BUILD_NO=$BUILD_NUMBER
 unset BUILD_NUMBER
+
+if [ -z "$BUILD_TAG" ]
+then
+  echo BUILD_TAG not specified, using the default one...
+  export BUILD_NUMBER=$(date +%Y%m%d)
+fi
 
 export PATH=~/bin:$PATH
 
