@@ -27,13 +27,7 @@ fi
 
 if [ -z "$WORKSPACE" ]
 then
-  echo WORKSPACE not specified, guessing...
-  exit 1
-fi
-
-if [ -z "$CLEAN" ]
-then
-  echo CLEAN not specified
+  echo WORKSPACE not specified
   exit 1
 fi
 
