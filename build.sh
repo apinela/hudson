@@ -31,6 +31,12 @@ then
   exit 1
 fi
 
+if [ -z "$CLEAN" ]
+then
+  echo CLEAN not specified, setting to false
+  export CLEAN=false
+fi
+
 if [ -z "$JOBS" ]
 then
   export JOBS=$(expr 1 + $(grep -c ^processor /proc/cpuinfo))
