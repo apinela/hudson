@@ -27,7 +27,7 @@ fi
 
 if [ -z "$WORKSPACE" ]
 then
-  echo WORKSPACE not specified
+  echo WORKSPACE not specified, guessing...
   exit 1
 fi
 
@@ -39,8 +39,8 @@ fi
 
 if [ -z "$JOBS" ]
 then
-  echo JOBS not specified
-  exit 1
+  export JOBS=$(expr 1 + $(grep -c ^processor /proc/cpuinfo))
+  echo JOBS not specified, using $JOBS jobs...
 fi
 
 if [ -z "$BUILD_TARGETS" ]
