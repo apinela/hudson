@@ -20,7 +20,7 @@ rm archive/**
 curl -ksO https://raw.githubusercontent.com/apinela/hudson/master/job.sh
 chmod a+x job.sh
 ./job.sh
-if [ "0" -eq "$?" ]
+if [ "0" -ne "$?" ]
   then
   exit 1
 fi
